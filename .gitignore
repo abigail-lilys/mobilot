@@ -1,0 +1,10 @@
+/target
+/third_party/godot-cpp
+/android/.gradle
+/android/build
+/android/app/build
+/android/app/.cxx
+/android/app/src/main/jniLibs
+*.so
+*.pck
+.DS_Store

@@ -1,0 +1,82 @@
+name: build
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-native:
+    name: Build Rust + C++ native libs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,x86_64-linux-android
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'ndk;27.0.12077973'
+
+      - name: Build Rust libmobilot_core
+        run: |
+          export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973
+          cargo ndk -t arm64-v8a -t x86_64 -p 26 \
+            -o android/app/src/main/jniLibs \
+            build --release -p mobilot_core
+
+      - name: Clone godot-cpp (4.6 branch)
+        run: |
+          git clone --depth 1 -b 4.6 \
+            https://github.com/godotengine/godot-cpp third_party/godot-cpp
+
+      - name: Upload native libs
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobilot-native-libs
+          path: android/app/src/main/jniLibs/**/*.so
+
+  build-apk:
+    name: Build APK
+    needs: build-native
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: mobilot-native-libs
+          path: android/app/src/main/jniLibs
+
+      - name: Clone godot-cpp (4.6 branch)
+        run: |
+          git clone --depth 1 -b 4.6 \
+            https://github.com/godotengine/godot-cpp third_party/godot-cpp
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'ndk;27.0.12077973'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Build Debug APK
+        working-directory: android
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/27.0.12077973
+        run: gradle assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobilot-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk

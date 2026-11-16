@@ -1,0 +1,40 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'org.mobilot.runtime'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'org.mobilot.demo'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '0.1.0'
+        ndk { abiFilters 'arm64-v8a', 'x86_64' }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path file('../../native/gdext_fuse/CMakeLists.txt')
+            version '3.22.1'
+        }
+    }
+
+    buildTypes {
+        release { minifyEnabled false }
+    }
+
+    packaging {
+        jniLibs { useLegacyPackaging true }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'org.godotengine:godot:4.6.3.stable'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+}
