@@ -43,11 +43,19 @@ public class MainActivity extends Activity {
         launchBtn.setText("启动运行时 (:godot_runtime)");
         launchBtn.setOnClickListener(v -> launchGame());
 
+        Button logBtn = new Button(this);
+        logBtn.setText("查看运行时日志");
+        logBtn.setOnClickListener(v -> {
+            Intent i = new Intent(MainActivity.this, LogViewerActivity.class);
+            startActivity(i);
+        });
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.addView(statusText);
         root.addView(pickBtn);
         root.addView(launchBtn);
+        root.addView(logBtn);
         setContentView(root);
     }
 

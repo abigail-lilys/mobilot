@@ -20,8 +20,12 @@ import org.godotengine.godot.GodotFragment;
 import org.godotengine.godot.GodotHost;
 import org.godotengine.godot.plugin.GodotPlugin;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -30,19 +34,39 @@ public class GameRuntimeActivity extends AppCompatActivity implements GodotHost 
     private String pckPath;
     private String driver = "opengl3";
     private String method = "gl_compatibility";
+    private File godotLogFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        File gameDir = new File(getFilesDir(), "games");
+        if (!gameDir.exists()) gameDir.mkdirs();
+        godotLogFile = new File(gameDir, "runtime_godot.log");
+        final File crashLogFile = new File(gameDir, "runtime_crash.log");
+
+        if (godotLogFile.exists()) godotLogFile.delete();
+
+        final Thread.UncaughtExceptionHandler previous =
+                Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
+            try (PrintWriter pw = new PrintWriter(new FileWriter(crashLogFile, true))) {
+                pw.println("=== " + new Date() + " ===");
+                pw.println("thread=" + thread.getName());
+                ex.printStackTrace(pw);
+                pw.flush();
+            } catch (Exception ignored) { }
+            if (previous != null) previous.uncaughtException(thread, ex);
+        });
 
         Intent intent = getIntent();
         if (intent != null) {
             String p = intent.getStringExtra("pck_path");
             if (p != null) pckPath = p;
             String d = intent.getStringExtra("driver");
-            if (d != null) driver = d;
+            if (d != null && !d.isEmpty()) driver = d;
             String m = intent.getStringExtra("method");
-            if (m != null) method = m;
+            if (m != null && !m.isEmpty()) method = m;
         }
 
         FrameLayout root = new FrameLayout(this);
@@ -82,13 +106,20 @@ public class GameRuntimeActivity extends AppCompatActivity implements GodotHost 
 
     @Override
     public List<String> getCommandLine() {
+        String logPath = godotLogFile != null
+                ? godotLogFile.getAbsolutePath()
+                : new File(getFilesDir(), "games/runtime_godot.log").getAbsolutePath();
+
         if (pckPath == null) {
-            return Arrays.asList("--rendering-driver", driver);
+            return Arrays.asList(
+                    "--rendering-driver", driver,
+                    "--log-file", logPath);
         }
         return Arrays.asList(
                 "--main-pack", pckPath,
                 "--rendering-driver", driver,
-                "--rendering-method", method);
+                "--rendering-method", method,
+                "--log-file", logPath);
     }
 
     @Override
