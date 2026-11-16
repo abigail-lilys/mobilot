@@ -22,9 +22,15 @@ jobs:
         with:
           packages: 'ndk;27.0.12077973'
 
+      # 👇 关键修复：runner 预装的 ANDROID_NDK_HOME 会指向别的版本，
+      #    这里显式覆盖为刚钉定的 NDK 路径，后续 cargo ndk 和 CMake 都会继承。
+      - name: Pin ANDROID_NDK_HOME
+        run: |
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> "$GITHUB_ENV"
+
       - name: Build Rust libmobilot_core
         run: |
-          export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973
           cargo ndk -t arm64-v8a -t x86_64 -p 26 \
             -o android/app/src/main/jniLibs \
             build --release -p mobilot_core
@@ -61,6 +67,11 @@ jobs:
         with:
           packages: 'ndk;27.0.12077973'
 
+      - name: Pin ANDROID_NDK_HOME
+        run: |
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.0.12077973" >> "$GITHUB_ENV"
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -72,8 +83,6 @@ jobs:
 
       - name: Build Debug APK
         working-directory: android
-        env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/27.0.12077973
         run: gradle assembleDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
