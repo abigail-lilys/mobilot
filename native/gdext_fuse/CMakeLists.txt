@@ -13,20 +13,28 @@ set(GODOTCPP_API_VERSION "4.6" CACHE STRING "Target Godot API version for godot-
 
 add_subdirectory(${GODOT_CPP_DIR} godot-cpp)
 
+if(DEFINED ANDROID_ABI AND NOT "${ANDROID_ABI}" STREQUAL "")
+    set(_MOBILOT_ABI "${ANDROID_ABI}")
+elseif(DEFINED CMAKE_ANDROID_ARCH_ABI AND NOT "${CMAKE_ANDROID_ARCH_ABI}" STREQUAL "")
+    set(_MOBILOT_ABI "${CMAKE_ANDROID_ARCH_ABI}")
+else()
+    message(FATAL_ERROR "Cannot determine current Android ABI (ANDROID_ABI / CMAKE_ANDROID_ARCH_ABI both empty)")
+endif()
+
 set(_MOBILOT_JNI_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../android/app/src/main/jniLibs")
-file(GLOB _MOBILOT_SO_CANDIDATES "${_MOBILOT_JNI_ROOT}/*/libmobilot_core.so")
-list(LENGTH _MOBILOT_SO_CANDIDATES _MOBILOT_SO_COUNT)
-if(_MOBILOT_SO_COUNT EQUAL 0)
+set(MOBILOT_CORE_SO "${_MOBILOT_JNI_ROOT}/${_MOBILOT_ABI}/libmobilot_core.so")
+message(STATUS "Target ABI: ${_MOBILOT_ABI}")
+message(STATUS "Using mobilot_core: ${MOBILOT_CORE_SO}")
+
+if(NOT EXISTS "${MOBILOT_CORE_SO}")
     message(FATAL_ERROR
-        "libmobilot_core.so not found under ${_MOBILOT_JNI_ROOT}/*/\n"
-        "Contents of jniLibs:")
+        "libmobilot_core.so not found at: ${MOBILOT_CORE_SO}\n"
+        "Contents of ${_MOBILOT_JNI_ROOT}:")
     file(GLOB _MOBILOT_ALL "${_MOBILOT_JNI_ROOT}/*")
     foreach(_f ${_MOBILOT_ALL})
         message(STATUS "  ${_f}")
     endforeach()
 endif()
-list(GET _MOBILOT_SO_CANDIDATES 0 MOBILOT_CORE_SO)
-message(STATUS "Using mobilot_core: ${MOBILOT_CORE_SO}")
 
 add_library(mobilot_core SHARED IMPORTED)
 set_target_properties(mobilot_core PROPERTIES
