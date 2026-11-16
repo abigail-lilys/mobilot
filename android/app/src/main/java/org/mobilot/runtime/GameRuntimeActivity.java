@@ -20,6 +20,7 @@ import org.godotengine.godot.GodotFragment;
 import org.godotengine.godot.GodotHost;
 import org.godotengine.godot.plugin.GodotPlugin;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -82,9 +83,9 @@ public class GameRuntimeActivity extends AppCompatActivity implements GodotHost 
     @Override
     public List<String> getCommandLine() {
         if (pckPath == null) {
-            return Collections.singletonList("--rendering-driver", driver);
+            return Arrays.asList("--rendering-driver", driver);
         }
-        return java.util.Arrays.asList(
+        return Arrays.asList(
                 "--main-pack", pckPath,
                 "--rendering-driver", driver,
                 "--rendering-method", method);
