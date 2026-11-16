@@ -35,7 +35,7 @@ jobs:
 
       - name: Clone godot-cpp (4.6 branch)
         run: |
-          git clone --depth 1 -b 4.6 \
+          git clone --depth 1 -b master \
             https://github.com/godotengine/godot-cpp third_party/godot-cpp
 
       - name: Upload native libs
@@ -58,7 +58,7 @@ jobs:
 
       - name: Clone godot-cpp (4.6 branch)
         run: |
-          git clone --depth 1 -b 4.6 \
+          git clone --depth 1 -b master \
             https://github.com/godotengine/godot-cpp third_party/godot-cpp
 
       - uses: android-actions/setup-android@v3
